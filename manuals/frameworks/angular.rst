@@ -122,7 +122,7 @@ Estructura de un proyecto en Angular
 +---------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
 | .editorconfig       | Para escribir reglas de escritores de trabajo en equipo (Plugin editor config)                                                            |
 +---------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
-| tsconfig.json      | Configuración de que tiene angular con typescript. Compilación, versiones de typScript, donde transpile los archivos                       |
+| tsconfig.json       | Configuración de que tiene angular con typescript. Compilación, versiones de typScript, donde transpile los archivos                      |
 +---------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
 | angular.json        | Se puede manejar diferentes ambientes (Staging, QA, Production) También configuraciones de compilación, tamaños de la aplicación, etc     |
 +---------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
@@ -631,3 +631,626 @@ Los pasos para subir un proyecto en firebase son los siguientes
 11. Cambiamos el parámetro public del archivo firebase.json por el directorio anterior
 12. Ultimo paso de firebase ejecutar --> firebase deploy 
 13. Listo nos devuelve la URL de nuestro proyecto
+
+
+Componentes en Angular
+######################
+
+Es la parte mas importante y el bloque principal para desarrollar en Angular.
+No es buena practica tener toda la lógica y la aplicación en un solo archivo.
+Abstraemos toda la lógica en varios componentes con responsabilidades únicas y estilos apropiados
+
+Los componentes en Angular tienen **4** archivos :
+
+* La **Vista o template** html
+* Los **estilos** css, scss o less
+* Un archivo para hacer **pruebas** spec.ts
+* Un archivo que tienen toda la **lógica** y une los anteriores component.ts
+
+El comando para crear un componente es: 
+
+.. code-block:: console
+
+   ng g c nombre_componente
+
+.. note::
+   * La **g** es por generate y la **c** por componentes
+   * Es recomendable crear los componentes en una directorio **components/**
+   * El CLI de Angular modifica el archivo ``app.module.ts``.
+
+
+"Cada componente debe pertenecer a un modulo, y no a mas de uno."
+
+El archivo ``component.ts`` de un componente esta formado por varias partes.
+
+Utiliza un decorador ``@Component`` :  Que especifica a Angular como debe comportarse la clase y enlaza los archivos de template y estilos y especifica el selector
+
+  * **selector:** manera en que vamos a utilizar el componente dentro de otros elementos
+  * **templateUrl:** Archivo enlazado de la vista
+  * **styleUrls:** Archivo de estilos enlazado
+
+Los componentes usan el nombre del **selector** para ser llamados como **tags** en el HTML de otro **Component**.
+
+
+Inputs
+######
+
+Es un **Decorador** que nos permite compartir datos entre un **componente padre** hacia un **componente hijo**.
+
+.. image:: ../../_static/img/frameworks/Angular/Input.png
+   :width: 400px
+   :alt: Inputs
+   :align: center
+
+Para ello en el **componente hijo** importamos ``Input`` y lo colocamos como decorador ``@Input()`` en la variable de la siguiente manera: 
+
+.. code-block:: typescript
+   :emphasize-lines: 1,7
+   :caption: Código TypeScript
+
+   import { Input } from '@angular/core'
+
+   @Component({
+       ...
+   })
+   export class ejemploComponent {
+       @Input() variable: string = 'valor inicial'
+
+       constructor() {}
+   }
+
+Para enviar el valor desde el componente padre escribimos lo siguiente
+
+.. code-block:: html+ng2
+   :caption: Código HTML
+   
+   <app-ejemplo variable="Texto del padre al hijo"></app-ejemplo>
+   
+También podemos hacer esto de forma dinámica utilizando ngModel
+
+.. code-block:: html+ng2
+   :caption: Código HTML
+   
+   <input type="text" [(ngModel)]="valor" />
+   <app-ejemplo [variable]="valor"></app-ejemplo>
+
+Desde el **.ts** del componente padre:
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 5
+
+   @Component({
+       ...
+   })
+   export class padreComponent {
+       valor: string = 'Texto del padre al hijo'
+
+       constructor() {}
+   }
+
+
+Output
+######
+
+Es un **Decorador** que nos permite compartir datos entre un **componente hijo** hacia un **componente padre**.
+
+.. image:: ../../_static/img/frameworks/Angular/output.png
+   :width: 400px
+   :alt: Outputs
+   :align: center
+
+Para ello en el **componente hijo** importamos ``Output`` y ``EventEmitter`` (especificamos el tipo) y lo colocamos como decorador ``@Output()`` en la variable de la siguiente manera: 
+
+.. code-block:: typescript
+   :emphasize-lines: 1,7,12
+   :caption: Código TypeScript
+
+   import { EventEmitter, Output } from '@angular/core'
+
+   @Component({
+       ...
+   })
+   export class ejemploComponent {
+       @Output() variableOutput = new EventEmitter<string>()
+
+       constructor() {}
+
+       ejemploClick(
+           this.variableOutput.emit('valor del hijo al padre')
+       )
+   }
+
+En el HTML del **componente hijo** ponemos un evento que genere la llamada de nuestra función para enviar el valor al padre
+
+.. code-block:: html+ng2
+   :caption: Código HTML
+   
+   <p (click)="ejemploClick()"></p>
+
+En el HTML del **componente padre** ponemos la variable como una **Property Binding** y una función para obtener el evento que del hijo.
+
+.. code-block:: html+ng2
+   :caption: Código HTML
+   
+   <app-ejemplo (variableOutput)="onEjecute($event)"></app-ejemplo>
+
+y por ultimo en el archivo **.ts** del **componente padre** escribimos la función que nos trae el valor del hijo.
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 8
+
+   @Component({
+       ...
+   })
+   export class padreComponent {
+       
+       constructor() {}
+
+       onEjecute(variableOutput: string){
+           console.log(variableOutput)
+       }
+   }
+
+
+Ciclo de vida en Angular
+########################
+
+Por cada momento del ciclo de vida de un componente en Angular, tenemos una acción y en la cual podemos correr ciertos eventos.
+
+
+.. class:: Constructor:
+
+* Es el que crea la instancia del componente. 
+* Correr antes que el render del html.
+* No correr cosas asíncronas aquí (peticiones a servidor, suscripción, o fetch).
+* Corre solo una vez.
+
+.. class:: ngOnChanges():
+
+* Correr antes que el render del html y durante la vida del componente.
+* Su objetivo es actualizar los cambios en los Inputs. 
+* Corre muchas veces (las que actualicemos los Inputs del componente).
+* Podemos usar un atributo del tipo ``SimpleChanges`` para escuchar todos los Inputs.
+
+.. class:: ngOnInit():
+
+* Correr antes de renderizar el html.
+* Aquí si podemos correr cosas async - fetch - llamadas API - promesas.
+* Corre una sola vez.
+
+.. class:: ngAfterViewInit():
+    
+* Corre después de renderizar el html. 
+* Es para manejar los hijos del componente (sus componentes del html que ya se aparecieron en el navegador).
+    
+.. class:: ngDestroy():
+
+* Se corre cuando eliminamos el componente.
+* Cuando usamos un ngIf y remueve de la interfaz.
+* Algunos eventos siguen existiendo aun asi se elimina el componente. Hay que eliminar todos los eventos que quedan en memoria.
+
+
+Importa fuentes en Angular
+##########################
+
+Vamos al archivo ``styles.scss`` y escribimos el siguiente código reemplazando el link por la url de nuestra fuente:
+
+.. code-block:: python
+   :caption: Código TypeScript
+
+   @import url('https://fonts.googleapis.com/css2?family=Quicksand&display=swap')
+   
+   * {  
+     font-family: 'Quicksand', sans-serif;
+   }
+
+
+Servicios
+#########
+
+Forma en la que angular nos permite hacer modular nuestra aplicación y apartar la lógica de negocio que no tiene que ver con la IU, si no para manipular datos, hacer servicios compartidos que puedan ser utilizados a traves de toda la aplicación por varios componentes. 
+
+Para generarlo utilizamos el siguiente comando en donde especificamos un directorio para almacenar todos nuestros servicios
+
+ng g s services/nombre_servicio
+
+.. note::
+   * La **g** es por generate y la **s** por service.
+   * Es recomendable crear los componentes en una directorio **servicios/**.
+   * El CLI de Angular modifica el archivo ``app.module.ts`` y nos genera 2 un **.spec.ts** y un **.ts**.
+   * No se generan archivos de interfaz porque los servicios comunican lógica de negocio.
+
+Dentro del archivo **.ts** tenemos el decorador @Injectable que le indica a Angular que el servicio se pueda inyectar en otros servicio y en otros componentes.
+
+Lógica del servicio:
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+
+   import { Injectable } from '@angular/core'
+
+   @Injectable({
+       provideIn: 'root'
+   })
+   export class NombreService {
+       serviceCounter: number = 0
+       constructor() {}
+
+       incrementCounter(contador) {
+           contador += 1
+           this.serviceCounter = contador
+       }
+
+       getContador(){
+           return this.serviceCounter
+       }
+   }
+
+En el componente tenemos que inyectar nuestro servicio 
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 9, 11, 15
+
+   import { NombreService } from  '../../service/name.service'
+
+   @Component({
+       ...
+   })
+   export class NameComponent {
+       contador: number = 1
+       constructor(
+           private nombreService: NombreService
+       ) {
+           console.log(this.nombreService.getContador())
+       }
+
+       onPressButton(){
+           this.nombreService.incrementCounter(this.contador)
+       }
+   }
+
+
+Inyección de dependencias
+##########################
+
+Angular marca con un decorador a los servicios, esto hace que se pueda inyectar en otros componentes.Tienen un domino o alcance como scope (EJ: provideIn: root) significa que es parte del modulo donde estemos trabajando.
+
+El motor de inyección de dependencias de angular, aprovecha el tipado para cuando el componente lo llame, crea una instancia de ese servicio y lo pone a su disposición.
+
+Podemos tener varios servicios, y también varios componentes.
+
+.. image:: ../../_static/img/frameworks/Angular/inyeccion-dependencias.png
+    :width: 400px
+    :alt: Logo Angular
+    :align: center
+
+En este ejemplo tenemos 2 servicios y 3 componentes, donde:
+
+* El componente A y B están requiriendo el servicio A
+* El componente B y C están requiriendo el servicio B
+
+Aquí podemos ver que el componente B inyecta a 2 servicios. **"Un componente puede inyectar cuantos servicios requiera"**
+
+También vemos que se aplica y Angular maneja y es el patron **Singleton**
+
+**Patron Singleton:** Si creo una instancia de algún elemento o clase (Ej: servicio A) y otro componente la requiere no crea otra instancia, si no que guarda en memoria la instancia ya creada anteriormente, y devuelve esa referencia a los demás componentes que la necesiten. Esto evita no crear instancias por cada componente que requiera el servicio.
+
+También puede darse el caso de que un servicio puede inyectar a otro:
+
+    Servicio B ==> Servicio A
+
+Lo que no se puede hacer es una inyección doble (Error de referencia circular):
+
+    Servicio B <==> Servicio A
+
+
+Angular Http
+############
+
+Angular tine un modulo especial para hacer peticiones **Angular Http**.
+
+Para usarlos importamos en **app.modules** y lo agregamos a imports.
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 1, 11
+
+   import { HttpClientModule } from '@angular/common/http';
+
+   @NgModule({
+        declarations: [
+            AppComponent
+            ...
+        ],
+        imports: [
+            BrowserModule,
+            AppRoutingModule,
+            HttpClientModule
+        ],
+        providers: [],
+        bootstrap: [AppComponent]
+   })
+
+Luego en **nuestro servicio** donde donde vamos a hacer la implementación, hacemos la llamada al **servicio HttpClient** del modulo **http de Angular**.
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 1, 10, 14
+
+   import { Injectable } from '@angular/core'
+   import { HttpClient } from '@angular/common/http'
+
+   @Injectable({
+       provideIn: 'root'
+   })
+   export class NombreService {
+
+       constructor(
+           private http: HttpClient
+       ) {}
+
+       getData(){
+           return this.http.get<Data[]>('url-api...')
+       }
+
+   }
+
+En el componente tenemos que inyectar **nuestro servicio** y llamar a la función que nos tre los datos de la **API**.
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 12, 13
+
+   import { NombreService } from  '../../service/name.service'
+
+   @Component({
+       ...
+   })
+   export class NameComponent implements OnInit{
+       constructor(
+           private nombreService: NombreService
+       ) {}
+
+       ngOnInit(): void {
+           this.nombreService.getData()
+                .subscribe(data => { console.log(data) })
+       }
+   }
+
+
+Pipes
+#####
+
+Son tuberías, tenemos una **entrada** , **transformación** y **salida** . Los pipes se pueden unir, la salida de una tubería puede ser la entrada de otra.
+
+Los pipes funcionan dentro de la vista en los strings interpolations. Angular trae incorporado una serie de pipes.
+
+Por ejemplo si tenemos una variable de precio en decimal que queremos mostrar podemos usar el **pipe currency** el cual no redondea a 2 decimales y ademas nos permite indicar el nombre de la moneda que estamos utilizando.
+
+Si tenemos una variable de tipo fecha con la fecha de hoy, podemos usar el **pipe date** el cual nos permite mostrar una fecha con formato especial y podríamos utilizar diferentes formatos según la `documentación <https://angular.io/api/common/DatePipe>`_ .
+
+También tenemos un **pipe uppercase** que nos permite Poner todo un texto en mayúsculas.
+
+.. code-block:: html
+   :caption: Código HTML
+
+   <h2> {{ price | currency:'ARG' }} <h2>
+
+   <p> Today: {{ today | date:'short' }} <p>
+   <p> otra fecha: {{ date | date:'yyyy/dd/MM' }} <p>
+
+   <p> {{ 'hoLA MuNDo' | uppercase }} <p>
+
+
+Para crear un nuevo **pipe** tenemos que utilizar el siguiente comando
+
+.. code-block:: console
+
+   ng g p pipes/nombre_pipe
+
+.. note::
+   * La **g** es por generate y la **p** por service.
+   * Es recomendable crear los **pipes** en una directorio **pipes/**.
+   * El comando anterior nos crea 2 archivos, el **.ts** donde definiremos las reglas de pipe y el **.spec.ts** que es para las pruebas.
+
+Dentro del directorio pipes buscamos el archivo **.ts** el cual tiene la siguiente estructura:
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 7
+
+   import { Pipe, PipeTransform } from '@angular/core';
+
+   @Pipe({
+       name: 'example'
+   })
+   export class ExamplePipe implements PipeTransform {
+       transform(value: unknown, ...args: unknown[]): unknown {
+           return null;
+       }
+   }
+
+Cambiaremos los argumentos de la función **transform** por lo que necesitemos por ejemplo:
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 7, 8
+
+   import { Pipe, PipeTransform } from '@angular/core';
+
+   @Pipe({
+       name: 'example'
+   })
+   export class ExamplePipe implements PipeTransform {
+       transform(value: string): string {
+           return value + value;
+       }
+   }
+
+
+Directivas
+##########
+
+Se utilizan para hacer modificación del DOM de forma directa, y modificar atributos. Usualmente evitamos hacer modificaciones directas del DOM porque angular ya lo hace por nosotros. Pero las directivas son otra forma de modificar el DOM con una buena practica.
+
+Para crear la **directiva** utilizamos el comando:
+
+.. code-block:: console
+
+   ng g d directives/nombre_directiva
+
+.. note::
+   * La **g** es por generate y la **g** por directive.
+   * Es recomendable crear las **directivas** en una directorio **directives/**.
+   * El comando anterior nos crea 2 archivos, el **.ts** donde definiremos la lógica de la directiva y el **.spec.ts** que es para las pruebas.
+
+Dentro del directorio directives buscamos el archivo **.ts** el cual tiene la siguiente estructura:
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+
+   import { Directive } from '@angular/core';
+
+   @Directive({
+       selector: '[appExample]'
+   })
+   export class ExampleDirective {
+       constructor () { }
+   }
+
+Una directiva tiene un decorador especifico para saber su funcionalidad directa, también tiene un selector que es la forma en la cual vamos a usarla dentro de nuestro HTML.
+
+Para poder manipular el DOM vamos a importar el servicio ElementRef, lo inyectamos en el constructor. Con nativeElement obtendremos el elemento nativo de HTML y podríamos agregarle estilo, manipularlo, etc.
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 1, 7, 8
+
+   import { Directive, ElementRef } from '@angular/core';
+
+   @Directive({
+       selector: '[appExample]'
+   })
+   export class ExampleDirective {
+       constructor ( private element: ElementRef) { 
+           this.element.nativeElement.style.backgroundColor = 'red';
+       }
+   }
+
+Para aplicar la directiva, vamos al html y lo ponemos como un atributo en el elemento
+
+.. code-block:: html+ng2
+   :caption: Código HTML
+  
+   <p appExample> Texto de ejemplo </p>
+
+También podemos escuchar eventos del elemento host (el que implementa la directiva) para realizar un comportamiento en especial. Para esto hay una directiva especial llamada ``@HostListener`` del paquete **@angular/core**
+
+.. code-block:: typescript
+   :caption: Código TypeScript
+   :emphasize-lines: 7, 11
+
+   import { Directive, ElementRef } from '@angular/core';
+
+   @Directive({
+       selector: '[appExample]'
+   })
+   export class ExampleDirective {
+        @HostListener('mouseenter') onMouseEnter(){
+           this.element.nativeElement.style.backgroundColor = 'red';
+        }
+        
+        @HostListener('mouseleave') onMouseLeave(){
+            this.element.nativeElement.style.backgroundColor = '';
+        }
+
+       constructor ( private element: ElementRef) { 
+       }
+   }
+
+Las directivas nos sirven para hacer modificaciones complejas y dinámicas al DOM, hay muchas librerías que usan directivas.
+
+Reactividad Básica
+###################
+
+HTML es un Árbol con sus nodos y sus hijos. Si un nodo del nivel de abajo de quiere comunicar con alguno de los otros niveles de arriba, lo que pensamos en teoría de arboles lo que tenemos que hacer es recorrer cada padre con los nodos que queremos visitar. Esto puede ser muy complejo porque al dividir la aplicación en muchos componentes tendríamos que hacer con la comunicación usando **Output** enviando a cada padre hasta llegar al nodo que queremos comunicar. Por esto se crearon estrategias para manipular el estado de otra forma sin tener que hacer todo el recorrido del árbol, teniendo un **STORE**, donde se almacenan los estados globales de la aplicación que se van a compartir. Por ejemplo: Session de usuario, carro de compras, array de productos,etc. Los componentes que quieran ese estado, se suscriben y cada vez que haya un cambio se notificara a los componentes que se suscribieron. 
+
+.. image:: ../../_static/img/frameworks/Angular/stageManagement.png
+    :width: 500px
+    :alt: Stage Management
+    :align: center
+
+
+Por ejemplo creamos un servicio donde definimos una variable como un **BehaviorSubject** que es la variable que vamos a transmitir (definimos valor inicial). A esa variable le creamos un suscriptor. Para transmitir utilizamos una función para cambiar el **estado**. 
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 2, 8, 9, 11, 12
+
+    import { Injectable } from '@angular/core'
+    import { BehaviorSubject } from 'rxjs'
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        private myValue = new BehaviorSubject<boolean>(false)
+        myValue$ = this.myValue.asObservable()
+
+        toggleValue(value: boolean){
+            this.myValue.next(value);
+        }
+
+        constructor() {}
+    }
+
+
+Por ultimo vamos al .ts del componente donde queramos escuchar/observar el valor que necesitemos, lo importamos y 
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 1, 11, 14, 15, 16
+
+    import { ExampleService } from '../../service/exampleservice.service'
+    
+    @Component({
+        ...
+    })
+    export class ejemploComponent implements OnInit {
+
+            value: boolean = false;
+
+        constructor() {
+            private exampleService: ExampleService
+        }
+
+        ngOnInit(): void {
+            this.exampleService.myValue$.subscribe(value => {
+                this.value = value;
+            })
+        }
+
+    }
+
+Linters en Angular
+##################
+
+Angular tiene un compendio de reglas de buenas practicas para escribir código (`Link <https://angular.io/guide/styleguide#naming>`_)
+
+Para ejecutar un linter en angular ejecutamos el siguiente comando:
+
+.. code-block:: console
+
+   ng lint 
+
+En caso que no tengamos ningún linter configurado ejecutamos el siguiente comando que angular nos sugiere:
+
+.. code-block:: console
+
+   ng add @angular-eslint/schematics
+
+.. note::
+   El comando anterior funciona bien para versiones de angular 12 o superior. Para mas información `ir a <https://github.com/angular-eslint/angular-eslint#migrating-from-codelyzer-and-tslint>`_.
