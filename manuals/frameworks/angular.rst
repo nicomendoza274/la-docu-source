@@ -958,7 +958,7 @@ Para usarlos importamos en **app.modules** y lo agregamos a imports.
    :caption: Código TypeScript
    :emphasize-lines: 1, 11
 
-   import { HttpClientModule } from '@angular/common/http';
+   import { HttpClientModule } from '@angular/common/http'
 
    @NgModule({
         declarations: [
@@ -1062,14 +1062,14 @@ Dentro del directorio pipes buscamos el archivo **.ts** el cual tiene la siguien
    :caption: Código TypeScript
    :emphasize-lines: 7
 
-   import { Pipe, PipeTransform } from '@angular/core';
+   import { Pipe, PipeTransform } from '@angular/core'
 
    @Pipe({
        name: 'example'
    })
    export class ExamplePipe implements PipeTransform {
        transform(value: unknown, ...args: unknown[]): unknown {
-           return null;
+           return null
        }
    }
 
@@ -1079,14 +1079,14 @@ Cambiaremos los argumentos de la función **transform** por lo que necesitemos p
    :caption: Código TypeScript
    :emphasize-lines: 7, 8
 
-   import { Pipe, PipeTransform } from '@angular/core';
+   import { Pipe, PipeTransform } from '@angular/core'
 
    @Pipe({
        name: 'example'
    })
    export class ExamplePipe implements PipeTransform {
        transform(value: string): string {
-           return value + value;
+           return value + value
        }
    }
 
@@ -1112,7 +1112,7 @@ Dentro del directorio directives buscamos el archivo **.ts** el cual tiene la si
 .. code-block:: typescript
    :caption: Código TypeScript
 
-   import { Directive } from '@angular/core';
+   import { Directive } from '@angular/core'
 
    @Directive({
        selector: '[appExample]'
@@ -1129,14 +1129,14 @@ Para poder manipular el DOM vamos a importar el servicio ElementRef, lo inyectam
    :caption: Código TypeScript
    :emphasize-lines: 1, 7, 8
 
-   import { Directive, ElementRef } from '@angular/core';
+   import { Directive, ElementRef } from '@angular/core'
 
    @Directive({
        selector: '[appExample]'
    })
    export class ExampleDirective {
        constructor ( private element: ElementRef) { 
-           this.element.nativeElement.style.backgroundColor = 'red';
+           this.element.nativeElement.style.backgroundColor = 'red'
        }
    }
 
@@ -1153,18 +1153,18 @@ También podemos escuchar eventos del elemento host (el que implementa la direct
    :caption: Código TypeScript
    :emphasize-lines: 7, 11
 
-   import { Directive, ElementRef } from '@angular/core';
+   import { Directive, ElementRef } from '@angular/core'
 
    @Directive({
        selector: '[appExample]'
    })
    export class ExampleDirective {
         @HostListener('mouseenter') onMouseEnter(){
-           this.element.nativeElement.style.backgroundColor = 'red';
+           this.element.nativeElement.style.backgroundColor = 'red'
         }
         
         @HostListener('mouseleave') onMouseLeave(){
-            this.element.nativeElement.style.backgroundColor = '';
+            this.element.nativeElement.style.backgroundColor = ''
         }
 
        constructor ( private element: ElementRef) { 
@@ -1201,7 +1201,7 @@ Por ejemplo creamos un servicio donde definimos una variable como un **BehaviorS
         myValue$ = this.myValue.asObservable()
 
         toggleValue(value: boolean){
-            this.myValue.next(value);
+            this.myValue.next(value)
         }
 
         constructor() {}
@@ -1221,7 +1221,7 @@ Por ultimo vamos al .ts del componente donde queramos escuchar/observar el valor
     })
     export class ejemploComponent implements OnInit {
 
-            value: boolean = false;
+            value: boolean = false
 
         constructor() {
             private exampleService: ExampleService
@@ -1229,7 +1229,7 @@ Por ultimo vamos al .ts del componente donde queramos escuchar/observar el valor
 
         ngOnInit(): void {
             this.exampleService.myValue$.subscribe(value => {
-                this.value = value;
+                this.value = value
             })
         }
 
@@ -1254,3 +1254,85 @@ En caso que no tengamos ningún linter configurado ejecutamos el siguiente coman
 
 .. note::
    El comando anterior funciona bien para versiones de angular 12 o superior. Para mas información `ir a <https://github.com/angular-eslint/angular-eslint#migrating-from-codelyzer-and-tslint>`_.
+
+
+Angular consumo de APIs
+#######################
+
+Para hacer request desde una aplicación en angular tenemos que habilitar el modulo ``HttpClientModule``. 
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 1, 10
+
+    import { HttpClientModule } from '@angular/forms'
+
+    @NgModule({
+    declarations: [
+        AppComponent
+    ],
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        HttpClientModule
+    ],
+    providers: [],
+    bootstrap: [AppComponent]
+    })
+
+
+Solicitudes GET
+***************
+
+**GET** : Es un verbo HTTP que nos sirve para obtener información 
+EJ: listado de productos, detalle de producto por un id 
+
+Dentro de un servicio, podemos hacer una solicitud GET a la url de nuestra API para traernos la información:
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 2
+
+    import { Injectable } from '@angular/core'
+    import { HttpClient } from '@angular/common/http'
+    import { TyeOfData } from '../../models/example.model'
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        url: string = '...' //URL API
+        constructor() {}
+
+        getAllData(){
+            return this.http.get<TyeOfData[]>(url)
+        }
+    }
+
+Luego vamos al componente donde ejecutaremos el servicio que trae los datos de la API y se llama de la siguiente manera
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 1, 8, 11, 15,16,17
+
+    import { ExampleService } from '...'
+    import { TyeOfData } from '...'
+
+    @Component({
+        ...
+    })
+    export class padreComponent {
+        data: TyeOfData
+
+        constructor(
+            Private exampleService: ExampleService
+        ) {}
+
+        ngOnInt(): void{
+            this.exampleService.getAllData()
+                .suscribe(data =>{
+                    this.data = data
+                })
+        }
+    }
+
