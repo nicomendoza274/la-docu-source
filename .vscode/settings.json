@@ -9,13 +9,17 @@
         "browserslistrc",
         "Docu",
         "maxdepth",
+        "paginación",
         "preprocesador",
         "Reactividad",
+        "reintentar",
+        "Reintentar",
         "renderiza",
         "renderizar",
         "setear",
         "tipado",
-        "toctree"
+        "toctree",
+        "transpilar"
     ],
 
   }

@@ -7,6 +7,11 @@ Angular
     :alt: Logo Angular
     :align: center
 
+.. |date| date::
+.. |time| date:: %H:%M
+
+Última edición el día |date| a las |time|.
+
 .. contents:: Table de contenidos de la pagina
    :depth: 2
    :local:
@@ -1291,7 +1296,7 @@ Dentro de un servicio, podemos hacer una solicitud GET a la url de nuestra API p
 
 .. code-block:: typescript
     :caption: Código TypeScript
-    :emphasize-lines: 2
+    :emphasize-lines: 2, 13
 
     import { Injectable } from '@angular/core'
     import { HttpClient } from '@angular/common/http'
@@ -1302,10 +1307,10 @@ Dentro de un servicio, podemos hacer una solicitud GET a la url de nuestra API p
     })
     export class NombreService {
         url: string = '...' //URL API
-        constructor() {}
+        constructor(private http: HttpClient) {}
 
         getAllData(){
-            return this.http.get<TyeOfData[]>(url)
+            return this.http.get<TyeOfData[]>(this.url)
         }
     }
 
@@ -1321,7 +1326,7 @@ Luego vamos al componente donde ejecutaremos el servicio que trae los datos de l
     @Component({
         ...
     })
-    export class padreComponent {
+    export class exampleComponent {
         data: TyeOfData
 
         constructor(
@@ -1336,3 +1341,482 @@ Luego vamos al componente donde ejecutaremos el servicio que trae los datos de l
         }
     }
 
+También podemos utilizar la solicitud de tipo **GET** para hacer la llamada al detalle de un solo dato 
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 2, 13
+
+    import { Injectable } from '@angular/core'
+    import { HttpClient } from '@angular/common/http'
+    import { TyeOfData } from '../../models/example.model'
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        url: string = '...' //URL API
+        constructor(private http: HttpClient) {}
+
+        getAllData(id: string){
+            return this.http.get<TyeOfData>(`${this.url}/${id}`)
+        }
+    }
+
+
+Solicitudes POST
+****************
+
+**POST:** Es un verbo HTTP que nos sirve para hacer creación. 
+EJ: Crear un producto, etc.
+
+Dentro de un servicio, podemos hacer una solicitud POST a la url de nuestra API para enviar datos para su creación.
+
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 2, 4, 13, 14
+
+    import { Injectable } from '@angular/core'
+    import { HttpClient } from '@angular/common/http'
+    import { TyeOfData } from '../../models/example.model'
+    import { TyeOfDataDTO } from '../../models/example.model'
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        url: string = '...' //URL API
+        constructor(private http: HttpClient) {}
+
+        create(data: TyeOfDataDTO){
+            return this.http.post<TyeOfData>(this.url, data)
+        }
+    }
+
+**DTO:** Data transfer object, Son objetos o información de transferencia que aveces concuerda con nuestro modelo y aveces tiene menos datos
+
+Por ejemplo si tenemos una interfaz llamada ``TyeOfData`` podemos crear otra a partir de esta otra llamada ``CreateTyeOfDataDTO`` omitiendo los valores que no deseamos y agregando nuevos valores:
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 8
+
+    export interface TyeOfData {
+        valor1: string;
+        valor2: number;
+        valor3: string[];
+        valor4: boolean;
+    }
+
+    export interface CreateTyeOfDataDTO extends Omit<TyeOfData, 'valor1' | 'valor4' > {
+        valor5: number
+    }
+
+
+Luego vamos al componente donde ejecutaremos el servicio para crear un nuevo dato:
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 1, 3, 10, 14, 20
+
+    import { ExampleService } from '...'
+    import { TyeOfData } from '...'
+    import { CreateTyeOfDataDTO } from '...'
+
+    @Component({
+        ...
+    })
+    export class exampleComponent {
+        constructor(
+            Private exampleService: ExampleService
+        ) {}
+
+        createNewData(){   
+            const dataDTO: CreateTyeOfDataDTO = {
+                valor2: 0,
+                valor3: ['...'],
+                valor5: 1,
+            }
+
+            this.exampleService.create(dataDTO)
+                .suscribe(data =>{
+                    console.log(data)
+                })
+        }
+        
+    }
+
+Solicitudes PUT y PATCH
+***********************
+
+**PUT** y **PATH** : Son los verbos HTTP que nos sirven para hacer actualización de información 
+
+**PUT:** Pasar todos los datos aun si no se actualizan todos.
+**PATH:** Pasar solo los datos que se actualizan.
+
+.. note::
+   El uso de una u otra petición dependerá de que como nuestro backend arme la API 
+
+Dentro de un servicio, podemos hacer una solicitud PUT a la url de nuestra API para modificar datos:
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 2, 4, 13,14
+
+    import { Injectable } from '@angular/core'
+    import { HttpClient } from '@angular/common/http'
+    import { TyeOfData } from '../../models/example.model'
+    import { UpdateTyeOfDataDTO } from '../../models/example.model'
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        url: string = '...' //URL API
+        constructor(private http: HttpClient) {}
+
+        update(id: string, dto: UpdateTyeOfDataDTO){
+            return this.http.post<TyeOfData>(`${this.url}/${id}`, dto)
+        }
+    }
+
+Creamos un DTO para la actualización en el el cual hacemos que todos los atributos sean opcionales:
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 8
+
+    export interface TyeOfData {
+        valor1: string;
+        valor2: number;
+        valor3: string[];
+        valor4: boolean;
+    }
+
+    export interface UpdateTyeOfDataDTO extends Partial<TyeOfData> {}
+
+Luego vamos al componente donde ejecutaremos el servicio para editar los datos:
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 1, 3, 10, 14, 20
+
+    import { ExampleService } from '...'
+    import { TyeOfData } from '...'
+    import { UpdateTyeOfDataDTO } from '...'
+
+    @Component({
+        ...
+    })
+    export class exampleComponent {
+        constructor(
+            Private exampleService: ExampleService
+        ) {}
+
+        UpdateData(id:string){   
+            const change: UpdateTyeOfDataDTO = {
+                valor1: '...',
+            }
+
+            this.exampleService.update(id,change)
+                .suscribe(data =>{
+                    console.log(data)
+                })
+        }
+    }
+
+Solicitud DELETE
+****************
+
+**DELETE:** Es un verbo HTTP que nos sirve para hacer eliminación de datos.
+
+Dentro de un servicio, podemos hacer una solicitud DELETE a la url de nuestra API para eliminar datos:
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 2, 11, 12
+
+    import { Injectable } from '@angular/core'
+    import { HttpClient } from '@angular/common/http'
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        url: string = '...' //URL API
+        constructor(private http: HttpClient) {}
+
+        delete(id: string){
+            return this.http.delete<boolean>(`${this.url}/${id}`)
+        }
+    }
+
+Y tan solo nos quedaría implementarlo en el componente donde queremos llamarlo.
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 1, 12
+
+    import { ExampleService } from '...'
+
+    @Component({
+        ...
+    })
+    export class exampleComponent {
+        constructor(
+            Private exampleService: ExampleService
+        ) {}
+
+        UpdateData(id:string){   
+            this.exampleService.delete(id)
+                .suscribe(data =>{
+                    console.log(data)
+                })
+        }
+    }
+
+URL Parameters
+##############
+
+En la url de los endpoint se pueden crear parámetros se pueden hacer varias cosas con ellos como por ejemplo filtros. 
+
+myapi.com/products&page=1
+myapi.com/products&price=100
+myapi.com/products&price_min=100?price_max=300
+
+Esto puede utilizarse para hacer paginación, cada pagina devuelve cierta cantidad de productos. Esto nos permite hacer implementaciones de scroll infinitos.
+
+Podemos implementar esto en una función separa o podemos pasar los valores limit y offset a nuestro get normal como parámetros opcionales.
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 2, 3, 10, 12, 19
+
+    import { Injectable } from '@angular/core'
+    import { HttpClient, HttpParams } from '@angular/common/http'
+    import { TyeOfData } from '../../models/example.model'
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        url: string = '...' //URL API
+        constructor(private http: HttpClient) {}
+
+        getDataByPage(limit: number, offset:number){
+            return this.http.get<TyeOfData>(`${this.url}`, {
+                params: { limit, offset }
+            })
+        }
+
+        // Función mas dinámica
+        getAllData(limit?: number, offset?:number){
+            let params = new HttpParams()
+            if (limit && offset){
+                params = params.set('limit', limit)
+                params = params.set('offset', offset)
+            }
+            return this.http.get<TyeOfData>(`${this.url}`, { params })
+        }
+    }
+
+.. note::
+   * Donde **limit** es la cantidad de datos que quiero mostrar y **offset** es a partir de que dato quiero mostrar.
+   * Para implementar solo quedaría ir a nuestro componente y llamar a cualquiera de las 2 funciones.
+
+
+Observables vs Promise
+######################
+
+* Uno de los beneficios de los **Observables** es que puedo emitir varios valores. (Angular lo utiliza en formularios reactivos, en peticiones, eventos dinámicos). Mientras que con las **Promesas** solo podemos emitir un valor y si queremos emitir mas necesitamos hacer otra promesa. 
+* Los **Observables** nos permite hacer trasformación y cancelarlos. Mientras que las **Promesas** una vez enviada no las podemos cancelar.
+* Con lso **Observables** podemos usar pipes que nos permiten hacerle filtros.
+
+
+Reintentar una petición
+########################
+
+Nos Sirve para **reintentar** una petición, haciendo uso de observables, un cierto numero de veces debido a algún fallo que pueda ocurrir al momento de su llamada.  
+
+.. code-block:: typescript
+    :caption: Código TypeScript
+    :emphasize-lines: 4, 20
+
+    import { Injectable } from '@angular/core'
+    import { HttpClient, HttpParams } from '@angular/common/http'
+    import { TyeOfData } from '../../models/example.model'
+    import { retry } from 'rxjs/operators';
+
+    @Injectable({
+        provideIn: 'root'
+    })
+    export class NombreService {
+        url: string = '...' //URL API
+        constructor(private http: HttpClient) {}
+
+        getAllData(limit?: number, offset?:number){
+            let params = new HttpParams()
+            if (limit && offset){
+                params = params.set('limit', limit)
+                params = params.set('offset', offset)
+            }
+            return this.http.get<TyeOfData>(`${this.url}`, { params })
+            .pipe( retry(3))
+        }
+    }
+
+.. note::
+   Si utilizamos retryWhen nos permite reintentar mientras se cumpla una condición.
+
+
+
+El problema de CORS
+###################
+
+Cross origin resource sharing es **"Permitir que podamos hacer peticiones desde varios dominios o dominios cruzados".**
+
+Este problema se da por el origen de la petición 
+
+* Si nuestro backend tiene el mismo origen que donde hago la petición, no tendremos problemas. Porque el backend tiene esta protección pro defecto, de solo aceptar peticiones si son de su mismo origen:
+
+    :guilabel:`api.mydomain.com --> api.mydomain.com` 
+
+
+* Si hacemos la petición desde un origen diferente, aquí nos va a dar el error de **CORS** porque no se soporta peticiones de orígenes diferentes.
+
+    :guilabel:`mydomain.com --> api.mydomain.com` 
+
+* También nos puede pasar en local por ejemplo:
+
+    :guilabel:`localhost:3000 --> localhost:3000` 
+
+.. warning::
+   Cuando usamos insomnia o Postman para hacer la solicitud, estas aplicaciones cambian el origen y lo ponen al mismo dominio para evitar **CORS**
+
+Solución
+*********
+
+1. Que el **Backend** habilite los CORS, configurar reglas de seguridad por ejemplo 
+
+   * Cualquier dominio [*] (API publicas)
+   * De un Listado de dominios permitidos [mydoamin.com, app.mydomain.com]
+   * También un listado de dominios locales (Para desarrollo) [..., localhost:4200]
+
+2. También se puede crear un **proxy** desde angular, hace algo similar que insomnia o Postman (solo soluciona desde desarrollo).
+
+    En la raíz creamos un archivo ``proxy.config.json`` con el siguiente contenido:
+
+    .. code-block:: json
+    
+        {
+            "/api/*": {
+                "tarjet": "https://young-sands-07814.herokuapp.com",
+                "secure": true,
+                "logLevel": "debug",
+                "changeOrigin": true,
+            }
+        }
+ 
+    Esto especifica que cualquier petición que venga de ``"/api/*"`` aplique las reglas:
+
+    * **target:** Cual es el intercambio (IP de ejemplo)
+    * **secure:** si es un dominio seguro (tiene https)
+    * **logLevel:** habilitamos el log para el debug
+    * **changeOrigin:** para indicar que cambie el origen
+
+    Luego vamos a nuestro **servicio** para cambiar nuestro string de conexión a por ej: /api/products
+
+    Podemos crear un nuevo script dentro del archivo ``package.json`` para poder correr el comando:
+
+    .. code-block:: console
+    
+       ng serve --proxy-config ./proxy.config.json
+
+    Este comando levanta el servidor con la configuración del proxy y no tener problemas de **CORS**
+
+
+Manejo de ambientes
+###################
+
+Dentro de nuestro proyecto encontramos el directorio ``environments/`` el cual tiene 2 archivos. Angular nos brinda por defecto 2 ambientes el de **Producción** y **Desarrollo:**
+
+* environment.prod.ts
+* environment.ts
+
+Por ejemplo podemos definir en ``environment.prod.ts`` (PRODUCCIÓN) lo siguiente:
+
+.. code-block:: typescript
+
+   export const enviroment = {
+       production: true,
+       API_URL: 'DOMINIO_API_PROD',
+   }
+
+Y en nuestro ``environment.ts`` (DESARROLLO):
+
+.. code-block:: typescript
+
+   export const enviroment = {
+       production: false,
+       API_URL: 'DOMINIO_API_DESARROLLO',
+   }
+
+Y luego en nuestro servicio hacemos las importaciones y llamamos a las variables **API_URL** y las reemplazamos en nuestro string de conexión.
+
+Para correr nuestra aplicación localmente utilizando el environment en producción por ejemplo podemos utilizar:
+
+.. code-block:: console
+
+   ng serve -c production -o
+
+En caso que queramos colocar otro entorno lo creamos dentro del directorio ``environment.prod.ts``, el mismo tiene que tener el nombre la siguiente forma:
+
+    :guilabel:`environment.example.ts`
+
+En este caso el entorno se llama **example.** 
+
+Luego hay que ir al archivo ``angular.json`` y dentro de **projects/architect/build/configurations** agregar la siguientes lineas:
+
+.. code-block:: json
+
+    "example": {
+        "fileReplacements": [
+                {
+                    "replace": "src/environments/environment.ts",
+                    "with": "src/environments/environment.example.ts"
+                }
+            ],
+            "optimization": true,
+            "sourceMap": false,
+            "namedChunks": false,
+            "extractLicenses": true,
+            "vendorChunk": false,
+            "buildOptimizer": true,
+            "budgets": [
+                {
+                    "type": "initial",
+                    "maximumWarning": "2mb",
+                    "maximumError": "5mb"
+                },
+                {
+                    "type": "anyComponentStyle",
+                    "maximumWarning": "6kb",
+                    "maximumError": "10kb"
+                }
+            ]
+    }
+
+y en el mismo archivo dentro de **projects/architect/serve/configurations** agregamos las siguientes lineas:
+
+.. code-block:: json
+
+    "example": {
+        "browserTarget": "project-name-example:build:example"
+    }
+
+y utilizando el siguiente comando podemos correr el entorno de forma local utilizando el entorno configurado anteriormente
+
+.. code-block:: console
+
+    ng serve -c example -o
